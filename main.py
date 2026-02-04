@@ -1,3 +1,30 @@
+
+from fastapi import FastAPI, Depends, HTTPException, Security, UploadFile, File
+from fastapi.security.api_key import APIKeyHeader
+
+# 1. Configuration
+API_KEY = "VOXCORE_2026_SECURE" # You can change this to any secret word
+API_KEY_NAME = "x-api-key"
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+app = FastAPI(title="VoxCore Guardian Mesh")
+
+# 2. Security Logic
+async def get_api_key(header_key: str = Security(api_key_header)):
+    if header_key == API_KEY:
+        return header_key
+    raise HTTPException(status_code=403, detail="Access Denied: Invalid API Key")
+
+# 3. HOME ROUTE (To fix the 404 error)
+@app.get("/")
+def home():
+    return {"message": "VoxCore API is Online. Visit /docs to test."}
+
+# 4. PROTECTED DETECTION ROUTE
+@app.post("/detect")
+async def detect_voice(file: UploadFile = File(...), api_key: str = Depends(get_api_key)):
+    # Your librosa/AI logic remains here
+    return {"status": "Success", "classification": "Human"}
 import base64
 import os
 import uuid
